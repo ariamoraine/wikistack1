@@ -23,7 +23,14 @@ app.use(express.static(__dirname + '/public'));
 app.use('/wiki', wikiRouter);
 
 app.get('/', function(req, res, next){
-  res.render('index');
+
+  Page.findAll({
+  })
+  .then(function(allPages) {
+    res.render('index', {allPages});
+  })
+  .catch(next);
+  // res.render('index');
 });
 
 
