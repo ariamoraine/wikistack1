@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const model = require('./models');
 const Page = model.Page;
 const User = model.User;
+const wikiRouter = require('./routes/wiki');
 
 var app = express();
 
@@ -19,9 +20,12 @@ app.use(bodyParser.json());
 
 app.use(express.static(__dirname + '/public'));
 
+app.use('/wiki', wikiRouter);
+
 app.get('/', function(req, res, next){
   res.render('index');
 });
+
 
 User.sync()
   .then(function() {

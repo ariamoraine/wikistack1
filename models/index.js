@@ -17,6 +17,12 @@ var Page = db.define('page', {
   status: {
     type: Sequelize.ENUM('open', 'closed')
   }
+}, {
+  getterMethods: {
+    route: function () {
+      return '/wiki/' + this.urlTitle;
+    }
+  }
 });
 
 var User = db.define('user', {
