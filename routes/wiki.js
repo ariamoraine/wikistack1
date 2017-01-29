@@ -1,44 +1,96 @@
 const express = require('express');
-const router = express.Router();
+const wikiRouter = express.Router();
 const models = require('../models');
 const Page = models.Page;
 const User = models.User;
+module.exports = wikiRouter;
 
-router.get('/add', function (req, res, next) {
+wikiRouter.get('/add', function (req, res, next) {
   res.render('addpage');
 });
 
-router.get('/:urlTitle', function (req, res, next){
+wikiRouter.get('/search/:tag', function (req, res, next) {
+  Page.findByTag(req.params.tag)
+  .then(function(allPages) {
+    console.log(allPages);
+    res.render('index', {
+      allPages: allPages
+    });
+  })
+  .catch(next);
+});
+
+wikiRouter.get('/:urlTitle', function (req, res, next){
 
   Page.findOne({
     where: {
       urlTitle: req.params.urlTitle
-    }
+    },
+    include: [
+      {model: User, as: 'author'}
+    ]
   })
-  .then(function(results) {
-      res.render('wikipage', {results});
+  .then(function(page) {
+
+      if (page === null) {
+        res.status(404).send();
+      } else {
+        res.render('wikipage', {
+          page: page
+        });
+      }
   })
   .catch(function(next){
   });
 
 });
 
-router.get('/', function (req, res, next) {
+wikiRouter.get('/', function (req, res, next) {
   res.redirect('/');
 });
 
-router.post('/', function (req, res, next) {
+wikiRouter.post('/', function (req, res, next) {
 
-  var page = Page.build({
-    title: req.body.title,
-    content: req.body.content
-  });
+  User.findOrCreate({
+    where: {
+      name: req.body.authorName,
+      email: req.body.authorEmail
+    }
+  })
+  .then(function (values) {
 
-  page.save()
-    .then(function () {
-      res.redirect(page.route);
+    var user = values[0];
+
+    var page = Page.build({
+      title: req.body.title,
+      content: req.body.content,
+      tags: req.body.tags
     });
+
+    return page.save().then(function (page) {
+      return page.setAuthor(user);
+    });
+
+  })
+  .then(function (page) {
+    res.redirect(page.route);
+  })
+  .catch(next);
 });
 
-
-module.exports = router;
+wikiRouter.get('/:urlTitle/similar', function (req, res, next) {
+  Page.findOne({
+    where: {
+      urlTitle: req.params.urlTitle
+    }
+  })
+    .then(function (page) {
+      return page.findSimilar();
+    })
+    .then(function (similarPages) {
+      res.render('index', {
+        allPages: similarPages
+      });
+    })
+    .catch(next);
+});

@@ -5,7 +5,8 @@ const bodyParser = require('body-parser');
 const model = require('./models');
 const Page = model.Page;
 const User = model.User;
-const wikiRouter = require('./routes/wiki');
+//const wikiRouter = require('./routes/wiki');
+//const usersRouter = require('./routes/users');
 
 var app = express();
 
@@ -20,7 +21,8 @@ app.use(bodyParser.json());
 
 app.use(express.static(__dirname + '/public'));
 
-app.use('/wiki', wikiRouter);
+app.use('/wiki', require('./routes/wiki'));
+app.use('/users', require('./routes/users'));
 
 app.get('/', function(req, res, next){
 

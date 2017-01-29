@@ -16,6 +16,21 @@ var Page = db.define('page', {
   },
   status: {
     type: Sequelize.ENUM('open', 'closed')
+  },
+  tags: {
+    type: Sequelize.ARRAY(Sequelize.TEXT),
+    set: function (value) {
+      var arrayOfTags;
+
+      if (typeof value === "string") {
+        arrayOfTags = value.split(",").map(function(s) {
+          return s.trim();
+        });
+        this.setDataValue('tags', arrayOfTags);
+      } else {
+        this.setDataValue('tags', value);
+      }
+    }
   }
 }, {
   getterMethods: {
@@ -31,6 +46,31 @@ var Page = db.define('page', {
         page.urlTitle = Math.random().toString(36).substring(2, 7);
       }
     }
+  },
+  classMethods: {
+    findByTag: function (tag) {
+      return Page.findAll({
+        where: {
+          tags: {
+            $overlap: [tag]
+          }
+        }
+      });
+    }
+  },
+  instanceMethods: {
+    findSimilar: function () {
+      return Page.findAll({
+        where: {
+          tags: {
+            $overlap: this.tags
+          },
+          id: {
+            $ne: this.id
+          }
+        }
+      });
+    }
   }
 });
 
@@ -45,6 +85,8 @@ var User = db.define('user', {
     isEmail: true
   }
 });
+
+Page.belongsTo(User, { as: 'author'});
 
 module.exports = {
   Page: Page,
